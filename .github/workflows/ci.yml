@@ -1,11 +1,33 @@
-script: |
-  docker stop frontend-app || true
-  docker rm frontend-app || true
+name: CI-CD Build and Deploy Docker Image
 
-  rm -rf devops || true
+on:
+  push:
+    branches:
+      - main
 
-  git clone https://github.com/Abineshwari-B/DevOps-Mini-Projects.git
-  cd DevOps-Mini-Projects/CI-CD\ Pipeline\ for\ Dockerized\ App/Source\ Code
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-  docker build -t frontend-app .
-  docker run -d -p 80:80 --name frontend-app frontend-app
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            docker stop frontend-app || true
+            docker rm frontend-app || true
+
+            rm -rf DevOps-Mini-Projects || true
+
+            git clone https://github.com/Abineshwari-B/DevOps-Mini-Projects.git
+
+            cd DevOps-Mini-Projects/CI-CD\ Pipeline\ for\ Dockerized\ App/Source\ Code
+
+            docker build -t frontend-app .
+            docker run -d -p 80:80 --name frontend-app frontend-app
